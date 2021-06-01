@@ -111,6 +111,7 @@ public struct ScaledFont {
     internal struct FontDescription: Decodable {
         let fontSize: CGFloat
         let fontName: String
+        let fontNameBold: String?
     }
 
     internal typealias StyleDictionary = [StyleKey.RawValue: FontDescription]
@@ -147,13 +148,24 @@ public struct ScaledFont {
     ///   font is returned.
 
     public func font(forTextStyle textStyle: UIFont.TextStyle) -> UIFont {
+
         guard let styleKey = StyleKey(textStyle),
-              let fontDescription = styleDictionary?[styleKey.rawValue],
-              let font = UIFont(name: fontDescription.fontName, size: fontDescription.fontSize)
+              let fontDescription = styleDictionary?[styleKey.rawValue]
         else {
             return UIFont.preferredFont(forTextStyle: textStyle)
         }
-
+        
+        var fontName = fontDescription.fontName
+        
+        if UIAccessibility.isBoldTextEnabled && fontDescription.fontNameBold != nil {
+            fontName = fontDescription.fontNameBold!
+        }
+        
+        guard let font = UIFont(name: fontName, size: fontDescription.fontSize)
+        else {
+            return UIFont.preferredFont(forTextStyle: textStyle)
+        }
+     
         let fontMetrics = UIFontMetrics(forTextStyle: textStyle)
         return fontMetrics.scaledFont(for: font)
     }
